@@ -23,8 +23,9 @@ public class MyTerminal
     JPanel panel;
     JTextArea area;
     int printed=0;String str="";
-
-    myterminal()throws Exception
+    public static int signal=1;
+    
+    MyTerminal()throws Exception
     {
         frame=new JFrame();
         Dimension dim=Toolkit.getDefaultToolkit().getScreenSize();
@@ -97,10 +98,15 @@ public class MyTerminal
                         area.append((char)i+"");
 
                         printed=area.getText().length();
+                        //indicating process has been stopped
+                        MyTerminal.signal=1;
                     }
-            }
-            catch(IOException ioe)
-            {}
+                }
+                catch(IOException ioe)
+                {
+                    //indicating process has been stopped
+                    MyTerminal.signal=1;
+                }
             }
         });
 
@@ -110,6 +116,8 @@ public class MyTerminal
         {
             public void keyPressed(KeyEvent e)
             {
+                if(MyTerminal.signal==1)
+                    System.exit(0);
                 if(e.getKeyCode() == KeyEvent.VK_ENTER)
                 {
                     try
@@ -123,7 +131,7 @@ public class MyTerminal
                     }
                     return;
                 }
-                else if(e.getKeyCode() == KeyEvent.VK_C)
+                else if(e.getKeyCode() == KeyEvent.VK_C && ( (e.getModifiers() & KeyEvent.CTRL_MASK) != 0) )
                 {
                     pp.destroy();
                     try
@@ -157,6 +165,6 @@ public class MyTerminal
     }
     public static void main(String arg[])throws Exception
     {
-        new myterminal();
+        new MyTerminal();
     }
 }
