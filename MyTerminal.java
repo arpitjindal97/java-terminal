@@ -16,48 +16,56 @@ import java.awt.event.KeyListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.text.*;
+import java.net.URLConnection;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 public class MyTerminal
 {
     JFrame frame;
     JPanel panel;
     JTextArea area;
     int printed=0;String str="";
-    public static int signal=1;
-    
+    public static int signal=0;
+
     MyTerminal()throws Exception
     {
-        frame=new JFrame();
-        Dimension dim=Toolkit.getDefaultToolkit().getScreenSize();
-        area=new JTextArea();
-        panel=new JPanel();
-        
-        class Filter extends DocumentFilter 
+        class Filter extends DocumentFilter
         {
-            public void insertString(final FilterBypass fb, final int offset, final String string, final AttributeSet attr)throws BadLocationException 
+            public void insertString(final FilterBypass fb, final int offset, final String string, final AttributeSet attr)throws BadLocationException
             {
-                if (offset >= printed) 
+                if (offset >= printed)
                 {
                     super.insertString(fb, offset, string, attr);
                 }
             }
-        
-            public void remove(final FilterBypass fb, final int offset, final int length) throws BadLocationException 
+
+            public void remove(final FilterBypass fb, final int offset, final int length) throws BadLocationException
             {
-                if (offset >= printed) 
+                if (offset >= printed)
                 {
                     super.remove(fb, offset, length);
                 }
             }
-        
-            public void replace(final FilterBypass fb, final int offset, final int length, final String text, final AttributeSet attrs)throws BadLocationException 
+
+            public void replace(final FilterBypass fb, final int offset, final int length, final String text, final AttributeSet attrs)throws BadLocationException
             {
-                if (offset >= printed) 
+                if (offset >= printed)
                 {
                     super.replace(fb, offset, length, text, attrs);
                 }
             }
         }
+
+        frame=new JFrame();
+        Dimension dim=Toolkit.getDefaultToolkit().getScreenSize();
+        area=new JTextArea();
+        panel=new JPanel();
 
         ((AbstractDocument)area.getDocument()).setDocumentFilter(new Filter());
 
@@ -73,19 +81,27 @@ public class MyTerminal
         Font font=new Font("Monospaced",Font.BOLD,12);
         area.setForeground(Color.GREEN);
         area.setFont(font);
+        frame.setTitle("Java Terminal made by Arpit");
         area.setCaretColor(Color.WHITE);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        //If you want to fetch lastest file from server
+        /*String msg="Fetching latest file ....\n";
+        area.append(msg);
+        printed=area.getText().length();
+
+        saveUrl(new FileOutputStream("hello.class"),new URL("https://github.com/arpitjindal97/java-terminal/blob/master/hello.class?raw=true"));
+        */
+
         ProcessBuilder pb;
-        
         pb=new ProcessBuilder("java","-cp",".","hello");
-        
+
         pb.redirectErrorStream(true);
         Process pp=pb.start();
 
-
         BufferedWriter cmdout=new BufferedWriter(new OutputStreamWriter(pp.getOutputStream()));
         BufferedReader cmdbr=new BufferedReader(new InputStreamReader(pp.getInputStream()));
+
         Thread input=new Thread(new Runnable()
         {
             public void run()
@@ -96,11 +112,13 @@ public class MyTerminal
                     while((i=cmdbr.read())!=-1)
                     {
                         area.append((char)i+"");
-
                         printed=area.getText().length();
-                        //indicating process has been stopped
-                        MyTerminal.signal=1;
                     }
+                    //indicating process has been stopped
+                    MyTerminal.signal=1;
+                    area.append("Process completed press any key to exit.....");
+                    printed=area.getText().length();
+                    (new File("verify.class")).delete();
                 }
                 catch(IOException ioe)
                 {
@@ -111,7 +129,7 @@ public class MyTerminal
         });
 
         input.start();
-      
+
         area.addKeyListener(new KeyAdapter()
         {
             public void keyPressed(KeyEvent e)
@@ -140,9 +158,9 @@ public class MyTerminal
                     }
                     catch(IOException ioe)
                     {}
-                    area.append("Process destroyed\nPress any key to exit.....");
+                    area.append("Process destroyed press any key to exit.....");
                     printed=area.getText().length();
-                    
+
                     return;
                 }
                 else
@@ -160,11 +178,38 @@ public class MyTerminal
             }
         });
 
-
         pp.waitFor();
     }
     public static void main(String arg[])throws Exception
     {
         new MyTerminal();
+    }
+    public static void saveUrl(final FileOutputStream filename, final URL urlString)
+            throws MalformedURLException, IOException
+    {
+        BufferedInputStream in = null;
+        FileOutputStream fout = null;
+        try
+        {
+            in = new BufferedInputStream(urlString.openStream());
+            fout = filename;
+
+            final byte data[] = new byte[1024];
+            int count;
+            while ((count = in.read(data, 0, 1024)) != -1)
+            {
+                fout.write(data, 0, count);
+            }
+        } finally
+        {
+            if (in != null)
+            {
+                in.close();
+            }
+            if (fout != null)
+            {
+                fout.close();
+            }
+        }
     }
 }
